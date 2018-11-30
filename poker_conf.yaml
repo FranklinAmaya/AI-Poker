@@ -1,9 +1,8 @@
-ai_players:
-- name: Data Blogger Bot
-  path: /Users/bradyzhang/PycharmProjects/AI-Poker/databloggerbot.py
 ante: 0
 blind_structure: null
 initial_stack: 100
 max_round: 10
 small_blind: 10
-
+ai_players:
+- name: ai_bot_player
+  path: aibot.py
