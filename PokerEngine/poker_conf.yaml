@@ -4,5 +4,5 @@ initial_stack: 100
 max_round: 10
 small_blind: 10
 ai_players:
-- name: ai_bot_player
-  path: aibot.py
+- name: ai_bot_players
+  path: PokerEngine/aibot.py
