@@ -5,15 +5,30 @@ from pypokerengine.utils.card_utils import _pick_unused_card, _fill_community_ca
 
 class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
 
+    def get_past_action(self, round_state):
+        return round_state['action_histories'][round_state['street']][-1]
+
     def declare_action(self, valid_actions, hole_card, round_state):
         
         # get evaluation score of hand
         print("================================================")
         print("Cards: " + str(hole_card))
-        hand_score = HandEvaluator.eval_hand(gen_cards(hole_card), gen_cards(round_state['community_card']))
-        print("Hand score: " + str(hand_score))
         win_rate = estimate_hole_card_win_rate(nb_simulation=1000, nb_player=2, hole_card=gen_cards(hole_card), community_card=gen_cards(round_state['community_card']))
         print("Win rate: " + str(win_rate))
+        print(self.uuid)
+
+        try:
+            opponent_action_dict = round_state['action_histories'][round_state['street']][-1]
+            print(round_state['street'])
+        except:
+            if round_state['street'] == 'turn':
+                opponent_action_dict = round_state['action_histories']['flop'][-1]
+            else:
+                opponent_action_dict = round_state['action_histories']['preflop'][-1]
+
+        print(round_state['action_histories'])
+        print(opponent_action_dict['action'])
+
 
         # Check whether it is possible to call
         can_call = len([item for item in valid_actions if item['action'] == 'call']) > 0
@@ -24,7 +39,7 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
             call_amount = 0
 
         amount = None
-        
+
         # If the win rate is large enough, then raise
         if win_rate > 0.5:
             raise_amount_options = [item for item in valid_actions if item['action'] == 'raise'][0]['amount']
@@ -36,9 +51,14 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
                 # If it is likely to win, then raise by the minimum amount possible
                 action = 'raise'
                 amount = raise_amount_options['min']
+
             else:
                 # If there is a chance to win, then call
                 action = 'call'
+
+        elif round_state['street'] == 'preflop' and win_rate >= 0.4:
+            action = 'call'
+
         else:
             action = 'call' if can_call and call_amount == 0 else 'fold'
 
