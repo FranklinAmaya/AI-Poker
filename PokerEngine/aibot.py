@@ -29,6 +29,10 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
 
         print(round_state['action_histories'])
         print(opponent_action_dict['action'])
+        print(round_state)
+        pot_amount = round_state['pot']['main']['amount']
+        ai_stack = [player['stack'] for player in round_state['seats'] if player['uuid'] == self.uuid][0])
+        initial_stack = game_info['initial_stack']
 
 
         # Check whether it is possible to call
@@ -73,8 +77,9 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
                     action = 'call'
             else:
                 action = 'raise'
-                amount = raise_amount_options['min']
-                print(round_state['pot']['main']['amount'])
+                amount = int((ai_stack/initial_stack)/2 * (raise_amount_options['max'] - raise_amount_options['min']))
+                amount += raise_amount_options['min']
+                
             #action = 'call' if can_call and call_amount == 0 else 'fold'
 
         # Set the amount
