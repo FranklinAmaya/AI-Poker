@@ -1,6 +1,7 @@
 from pypokerengine.players import BasePokerPlayer
 from pypokerengine.engine.hand_evaluator import HandEvaluator
 from pypokerengine.utils.card_utils import _pick_unused_card, _fill_community_card, gen_cards, estimate_hole_card_win_rate
+import random
 
 
 class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
@@ -60,7 +61,20 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
             action = 'call'
 
         else:
-            action = 'call' if can_call and call_amount == 0 else 'fold'
+            if opponent_action_dict['action'] == 'raise':
+                win_rate*= 2/3
+
+            randnum = random.uniform(0,1)
+            if randnum > win_rate:
+                action = 'fold'
+            elif randnum < win_rate/2
+                if can_call:
+                    action = 'call'
+            else:
+                action = 'raise'
+                amount = raise_amount_options['min']
+                print(round_state['pot']['main']['amount'])
+            #action = 'call' if can_call and call_amount == 0 else 'fold'
 
         # Set the amount
         if amount is None:
