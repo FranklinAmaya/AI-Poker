@@ -40,10 +40,11 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
             call_amount = 0
 
         amount = None
+        raise_amount_options = [item for item in valid_actions if item['action'] == 'raise'][0]['amount']
 
         # If the win rate is large enough, then raise
         if win_rate > 0.5:
-            raise_amount_options = [item for item in valid_actions if item['action'] == 'raise'][0]['amount']
+
             if win_rate > 0.85:
                 # If it is extremely likely to win, then raise as much as possible
                 action = 'raise'
@@ -67,7 +68,7 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
             randnum = random.uniform(0,1)
             if randnum > win_rate:
                 action = 'fold'
-            elif randnum < win_rate/2
+            elif randnum < win_rate/2:
                 if can_call:
                     action = 'call'
             else:
