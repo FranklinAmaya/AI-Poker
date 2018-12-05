@@ -69,8 +69,8 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
                 amount = raise_amount_options['max']
             elif win_rate > .75:
                 action = 'raise'
-                amount = int(2 * (self.initial_stack / (ai_stack)) * (raise_amount_options['max'] - raise_amount_options['min']) + raise_amount_options['min'])
-            elif win_rate > .45:
+                amount = int(((200 - ai_stack )/ (2*self.initial_stack)) * (raise_amount_options['max'] - raise_amount_options['min']) + raise_amount_options['min'])
+            elif win_rate > .55:
                 action = 'call'
             else:
                 if not self.bluffing:
@@ -88,15 +88,16 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
             # raise less if opponent calls
             if win_rate > .85:
                 action = 'raise'
-                amount = int(2*(self.initial_stack/(ai_stack))*(raise_amount_options['max'] - raise_amount_options['min']) + raise_amount_options['min'])
+                amount = int(((200 - ai_stack )/ (2*self.initial_stack))*(raise_amount_options['max'] - raise_amount_options['min']) + raise_amount_options['min'])
             elif win_rate > .75:
                 action = 'raise'
-                amount = int(1.7*(self.initial_stack/(ai_stack))*(raise_amount_options['max'] - raise_amount_options['min']) + raise_amount_options['min'])
+                amount = int(.85*((200 - ai_stack )/ (2*self.initial_stack))*(raise_amount_options['max'] - raise_amount_options['min']) + raise_amount_options['min'])
             elif win_rate > .45:
                 action = 'call'
             else:
+                randnum = random.uniform(0, 1)
+
                 if not self.bluffing:
-                    randnum = random.uniform(0, 1)
 
                     if randnum > win_rate:
                         action = 'fold'
@@ -112,9 +113,12 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
                         self.bluffing = True
                 else:
                     print("AI bot: bluffing")
-                    action = 'raise'
-                    amount = int((ai_stack / self.initial_stack) / 8 * (raise_amount_options['max'] - raise_amount_options['min']))
-                    amount += raise_amount_options['min']
+                    if randnum > .5:
+                        action = 'raise'
+                        amount = int((ai_stack / self.initial_stack) / 8 * (raise_amount_options['max'] - raise_amount_options['min']))
+                        amount += raise_amount_options['min']
+                    else:
+                        action = "call"
 
             print("Opponent called.")
 
