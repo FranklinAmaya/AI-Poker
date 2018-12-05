@@ -4,20 +4,17 @@ from pypokerengine.utils.card_utils import _pick_unused_card, _fill_community_ca
 import random
 
 
-class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
 
-    def get_past_action(self, round_state):
-        return round_state['action_histories'][round_state['street']][-1]
+class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BasePokerPlayer"
+    bluffing = False
+    initial_stack = 100
+    turn = 0
+    prev_round = 0
 
     def declare_action(self, valid_actions, hole_card, round_state):
-        
-        # get evaluation score of hand
-        print("================================================")
-        print("Cards: " + str(hole_card))
-        win_rate = estimate_hole_card_win_rate(nb_simulation=1000, nb_player=2, hole_card=gen_cards(hole_card), community_card=gen_cards(round_state['community_card']))
-        print("Win rate: " + str(win_rate))
-        print(self.uuid)
-
+        # Useful variables
+        win_rate = estimate_hole_card_win_rate(nb_simulation=1000, nb_player=2, hole_card=gen_cards(hole_card),
+                                               community_card=gen_cards(round_state['community_card']))
         try:
             opponent_action_dict = round_state['action_histories'][round_state['street']][-1]
             print(round_state['street'])
@@ -27,13 +24,10 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
             else:
                 opponent_action_dict = round_state['action_histories']['preflop'][-1]
 
-        print(round_state['action_histories'])
-        print(opponent_action_dict['action'])
-        print(round_state)
         pot_amount = round_state['pot']['main']['amount']
-        ai_stack = [player['stack'] for player in round_state['seats'] if player['uuid'] == self.uuid][0])
-        initial_stack = game_info['initial_stack']
-
+        ai_stack = [player['stack'] for player in round_state['seats'] if player['uuid'] == self.uuid][0]
+        raise_amount_options = [item for item in valid_actions if item['action'] == 'raise'][0]['amount']
+        opponent_action = opponent_action_dict['action']
 
         # Check whether it is possible to call
         can_call = len([item for item in valid_actions if item['action'] == 'call']) > 0
@@ -44,53 +38,101 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
             call_amount = 0
 
         amount = None
-        raise_amount_options = [item for item in valid_actions if item['action'] == 'raise'][0]['amount']
 
-        # If the win rate is large enough, then raise
-        if win_rate > 0.5:
+        if 'round_count' not in round_state.keys() and self.turn == 0:
+            self.bluffing = False
+        if 'round_count' in round_state.keys():
+            if round_state['round_count'] != self.prev_round:
+                self.prev_round = round_state['round_count']
+                self.bluffing = False
+                self.turn = 0
+                print("Turn reset")
 
-            if win_rate > 0.85:
-                # If it is extremely likely to win, then raise as much as possible
+
+        print(round_state)
+        print("Initial stack: " + str(self.initial_stack))
+
+        # get evaluation score of hand
+        print(round_state['street'])
+        print("================================================")
+        print("Turn: " + str(self.turn))
+        if 'round_count' in round_state.keys():
+            print("Round: " + str(round_state['round_count']))
+        print("Prev Round: " + str(self.prev_round))
+        print("Cards: " + str(hole_card))
+        print("Win rate: " + str(win_rate))
+
+        if opponent_action == "raise":
+            print("Opponent raised.")
+            if win_rate > .85:
                 action = 'raise'
                 amount = raise_amount_options['max']
-            elif win_rate > 0.75:
-                # If it is likely to win, then raise by the minimum amount possible
+            elif win_rate > .75:
                 action = 'raise'
-                amount = raise_amount_options['min']
-
-            else:
-                # If there is a chance to win, then call
+                amount = int(2 * (self.initial_stack / (ai_stack)) * (raise_amount_options['max'] - raise_amount_options['min']) + raise_amount_options['min'])
+            elif win_rate > .45:
                 action = 'call'
+            else:
+                if not self.bluffing:
+                    randnum = random.uniform(0, 1)
 
-        elif round_state['street'] == 'preflop' and win_rate >= 0.4:
-            action = 'call'
+                    if randnum > win_rate / 2:
+                        action = 'fold'
+                    elif can_call:
+                        action = 'call'
+                else:
+                    print("AI bot: bluffing")
+                    action = 'call'
 
         else:
-            if opponent_action_dict['action'] == 'raise':
-                win_rate*= 2/3
-
-            randnum = random.uniform(0,1)
-            if randnum > win_rate - (win_rate/2):
-                action = 'fold'
-            elif randnum < win_rate/4:
-                if can_call:
-                    action = 'call'
-            else:
+            # raise less if opponent calls
+            if win_rate > .85:
                 action = 'raise'
-                amount = int((ai_stack/initial_stack)/2 * (raise_amount_options['max'] - raise_amount_options['min']))
-                amount += raise_amount_options['min']
-                
-            #action = 'call' if can_call and call_amount == 0 else 'fold'
+                amount = int(2*(self.initial_stack/(ai_stack))*(raise_amount_options['max'] - raise_amount_options['min']) + raise_amount_options['min'])
+            elif win_rate > .75:
+                action = 'raise'
+                amount = int(1.7*(self.initial_stack/(ai_stack))*(raise_amount_options['max'] - raise_amount_options['min']) + raise_amount_options['min'])
+            elif win_rate > .45:
+                action = 'call'
+            else:
+                if not self.bluffing:
+                    randnum = random.uniform(0, 1)
 
-        # Set the amount
+                    if randnum > win_rate / 2:
+                        action = 'fold'
+                    elif randnum > win_rate / 4 and can_call:
+                        action = 'call'
+                    else:
+                        print("AI bot: bluffing")
+
+                        action = 'raise'
+                        #small bluff
+                        amount = int((ai_stack / self.initial_stack) / 4 * (raise_amount_options['max'] - raise_amount_options['min']))
+                        amount += raise_amount_options['min']
+                        self.bluffing = True
+                else:
+                    print("AI bot: bluffing")
+                    action = 'raise'
+                    amount = int((ai_stack / self.initial_stack) / 4 * (raise_amount_options['max'] - raise_amount_options['min']))
+                    amount += raise_amount_options['min']
+
+            print("Opponent called.")
+
         if amount is None:
             items = [item for item in valid_actions if item['action'] == action]
             amount = items[0]['amount']
 
-        '''
-        call_action_info = valid_actions[1]
-        action, amount = call_action_info["action"], call_action_info["amount"] '''
-        return action, amount  # action returned here is sent to the poker engine
+        if amount < 0 or self.turn == 0:
+            action = 'call'
+            items = [item for item in valid_actions if item['action'] == action]
+            amount = items[0]['amount']
+
+            if win_rate < .35:
+                action = 'fold'
+
+        self.turn += 1
+        print("AI bot: " + action)
+        return action, amount
 
     def receive_game_start_message(self, game_info):
         self.n_players = game_info['player_num']
