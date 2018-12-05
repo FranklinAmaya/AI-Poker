@@ -70,9 +70,9 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
                 win_rate*= 2/3
 
             randnum = random.uniform(0,1)
-            if randnum > win_rate:
+            if randnum > win_rate - (win_rate/2):
                 action = 'fold'
-            elif randnum < win_rate/2:
+            elif randnum < win_rate/4:
                 if can_call:
                     action = 'call'
             else:
