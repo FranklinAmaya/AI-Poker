@@ -127,8 +127,13 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
             items = [item for item in valid_actions if item['action'] == action]
             amount = items[0]['amount']
 
-            if win_rate < .35:
+            if win_rate < .25:
                 action = 'fold'
+
+        if action == "raise" and amount > raise_amount_options['max']:
+            amount = raise_amount_options['max']
+        if action == "raise" and amount < raise_amount_options['min']:
+            amount = raise_amount_options['min']
 
         self.turn += 1
         print("AI bot: " + action)
