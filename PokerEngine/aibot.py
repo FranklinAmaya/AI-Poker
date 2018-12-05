@@ -98,22 +98,22 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
                 if not self.bluffing:
                     randnum = random.uniform(0, 1)
 
-                    if randnum > win_rate / 2:
+                    if randnum > win_rate:
                         action = 'fold'
-                    elif randnum > win_rate / 4 and can_call:
+                    elif randnum > win_rate / 2 and can_call:
                         action = 'call'
                     else:
                         print("AI bot: bluffing")
 
                         action = 'raise'
                         #small bluff
-                        amount = int((ai_stack / self.initial_stack) / 4 * (raise_amount_options['max'] - raise_amount_options['min']))
+                        amount = int((ai_stack / self.initial_stack) / 8 * (raise_amount_options['max'] - raise_amount_options['min']))
                         amount += raise_amount_options['min']
                         self.bluffing = True
                 else:
                     print("AI bot: bluffing")
                     action = 'raise'
-                    amount = int((ai_stack / self.initial_stack) / 4 * (raise_amount_options['max'] - raise_amount_options['min']))
+                    amount = int((ai_stack / self.initial_stack) / 8 * (raise_amount_options['max'] - raise_amount_options['min']))
                     amount += raise_amount_options['min']
 
             print("Opponent called.")
@@ -128,6 +128,9 @@ class AIPlayer(BasePokerPlayer):  # Do not forget to make parent class as "BaseP
             amount = items[0]['amount']
 
             if win_rate < .25:
+                action = 'fold'
+
+            if opponent_action == 'raise' and win_rate < .4:
                 action = 'fold'
 
         if action == "raise" and amount > raise_amount_options['max']:
